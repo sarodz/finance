@@ -13,19 +13,18 @@ class StockData(object):
         if ":" not in ticker:
             raise ValueError("Provide full ticker name, missing : in name")
         if "." in ticker:
-            ticker = ticker.replace(".", "-") 
+            ticker = ticker.replace(".", "-")
         self.cache_exist = StockData._checkCache(data_path, ticker)
         self.ticker = ticker
-        self.client = TimeSeries(key=API_key, output_format="csv")    
+        self.client = TimeSeries(key=API_key, output_format="csv")
         self.freq = freq
         self.data_parent_path = data_path
-
 
     @staticmethod
     def _checkCache(parent, ticker):
         file_name = f"{parent}\\cache.yaml"
         if not os.path.isfile(file_name):
-            with open(file_name, "w") as f: 
+            with open(file_name, "w") as f:
                 yaml.dump({"init": None}, f)
 
         with open(file_name, "r") as f:
@@ -52,7 +51,9 @@ class StockData(object):
             os.remove(file_name)
 
         with open(file_name, "w", newline="") as f:
-            writer = csv.writer(f, delimiter=",", quotechar="\"", quoting=csv.QUOTE_MINIMAL)
+            writer = csv.writer(
+                f, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+            )
             for row in data[0]:
                 writer.writerow(row)
 
@@ -60,8 +61,7 @@ class StockData(object):
         with open(f"{parent}\\cache.yaml", "w") as f:
             latest = (datetime.now() - timedelta(days=1)).strftime("%d-%m-%Y")
             meta = {**meta, **{ticker: latest}}
-            yaml.dump(meta, f)      
-
+            yaml.dump(meta, f)
 
     @staticmethod
     def _readCache(parent, ticker, freq):
@@ -70,7 +70,6 @@ class StockData(object):
         with open(file_name, "r") as f:
             reader = csv.reader(f, delimiter=",")
         return reader
-
 
     def _getDaily(self, refresh):
         if not self.cache_exist:
@@ -84,7 +83,6 @@ class StockData(object):
             data = self.client.get_daily_adjusted(symbol=self.ticker, outputsize="full")
             StockData._writeCache(self.data_parent_path, data, self.ticker, self.freq)
         return data
-
 
     def get(self, refresh=False):
         if self.freq == "daily":
