@@ -1,30 +1,64 @@
-from data import StockData
 import streamlit as st
 import pandas as pd
 import numpy as np
 import yaml
+from session import _get_state
+from data import StockData
 #import matplotlib.pyplot as plt
 
-def main(path):
+PATH = "D:\\Data\\Finance"
+
+def main():
+    state = _get_state()
     # Collect existing metadata
-    with open(f"{path}\\cache.yaml", "r") as f:
-        meta = yaml.safe_load(f)
-        meta.pop("init", None)
-    companies = meta.keys()
+    meta = loadCache()
+    state.companies = [*meta]
+
+    pages = {
+        "Dashboard": page_dashboard,
+        "Data": page_data,
+    }
+    st.sidebar.title("Navigate")
+    page = st.sidebar.radio("Select your page", tuple(pages.keys()))
+
+    # Display the selected page with the session state
+    pages[page](state)
+
+    # Mandatory to avoid rollbacks with widgets, must be called at the end of your app
+    state.sync()
+
+
+def page_dashboard(state):
+    st.title("Dashboard page")
 
     # Provide instructions to the user
     readme_text = st.markdown(readFile("instructions.md"))
 
-    st.sidebar.title("Company Selection")
-    comp_list = st.sidebar.selectbox("Company List",
-        ["Dropdown", *companies, "Add New"])
-    if comp_list == "Dropdown":
-        pass
-    elif comp_list == "Add New":
+    ticker = st.selectbox("Company List", ["", *state.companies])
+    if ticker == "":
         pass
     else:
         readme_text.empty()
-        run_app(comp_list, path)
+        run_app(ticker, PATH)
+
+
+def page_data(state):
+    st.title("Data")
+    st.write("The following tickers are stored in cache")
+    st.selectbox("Company List", ["", *state.companies])
+    ticker = st.text_input("Type ticker with market name to load a new ticker (Ex: TSX:TD)", "")
+    if ticker != "":
+        d = StockData(ticker=ticker, data_path=PATH)
+        d.get(refresh=False)
+        st.write(f"{ticker} is accesible now, navigate to Dashboard to access it")
+
+
+def loadCache():
+    with open(f"{PATH}\\cache.yaml", "r") as f:
+        meta = yaml.safe_load(f)
+        meta.pop("init", None)
+    return meta
+
 
 def run_app(company, path):
     @st.cache
@@ -65,5 +99,4 @@ def readFile(path):
 
 if __name__ == "__main__":
     # if need be provide argument parser
-    PATH = "D:\\Data\\Finance"
-    main(PATH)
+    main()
