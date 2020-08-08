@@ -12,8 +12,6 @@ class StockData(object):
             API_key = secrets["alphavantage"]["API_key"]
         if ":" not in ticker:
             raise ValueError("Provide full ticker name, missing : in name")
-        if "." in ticker:
-            ticker = ticker.replace(".", "-")
         self.cache_exist = StockData._checkCache(data_path, ticker)
         self.ticker = ticker
         self.client = TimeSeries(key=API_key, output_format="csv")
@@ -80,7 +78,8 @@ class StockData(object):
             data = StockData._readCache(self.data_parent_path, self.ticker, self.freq)
         else:
             print("Retrieving data")
-            data = self.client.get_daily_adjusted(symbol=self.ticker, outputsize="full")
+            ticker = self.ticker.replace(".", "-")
+            data = self.client.get_daily_adjusted(symbol=ticker, outputsize="full")
             StockData._writeCache(self.data_parent_path, data, self.ticker, self.freq)
         return data
 
