@@ -18,6 +18,7 @@ class StockData(object):
         self.freq = freq
         ticker_temp = ticker.replace(":", "_") 
         self.name = f"{data_path}\\{ticker_temp}_{freq}.csv"
+        self.parent = data_path
 
     @staticmethod
     def _checkCache(parent, ticker):
@@ -42,10 +43,7 @@ class StockData(object):
         return meta
 
     @staticmethod
-    def _writeCache(parent, data, ticker, freq):
-        ticker_temp = ticker.replace(":", "_")
-        file_name = f"{parent}\\{ticker_temp}_{freq}.csv"
-
+    def _writeCache(parent, data, ticker, file_name):
         if os.path.isfile(file_name):
             os.remove(file_name)
 
@@ -79,7 +77,7 @@ class StockData(object):
             print("Retrieving data")
             ticker = self.ticker.replace(".", "-")
             data = self.client.get_daily_adjusted(symbol=ticker, outputsize="full")
-            StockData._writeCache(self.data_parent_path, data, self.ticker, self.freq)
+            StockData._writeCache(self.parent, data, self.ticker, self.name)
         return data
 
     def get(self, refresh=False):
