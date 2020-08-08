@@ -17,10 +17,8 @@ def main(path):
 
     st.sidebar.title("Company Selection")
     comp_list = st.sidebar.selectbox("Company List",
-        ["Dropdown", *companies, "Add New"])
+        ["Dropdown", *companies])
     if comp_list == "Dropdown":
-        pass
-    elif comp_list == "Add New":
         pass
     else:
         readme_text.empty()
