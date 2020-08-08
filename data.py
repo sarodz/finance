@@ -16,7 +16,8 @@ class StockData(object):
         self.ticker = ticker
         self.client = TimeSeries(key=API_key, output_format="csv")
         self.freq = freq
-        self.data_parent_path = data_path
+        ticker_temp = ticker.replace(":", "_") 
+        self.name = f"{data_path}\\{ticker_temp}_{freq}.csv"
 
     @staticmethod
     def _checkCache(parent, ticker):
@@ -62,10 +63,8 @@ class StockData(object):
             yaml.dump(meta, f)
 
     @staticmethod
-    def _readCache(parent, ticker, freq):
-        ticker_temp = ticker.replace(":", "_")
-        file_name = f"{parent}\\{ticker_temp}_{freq}.csv"
-        with open(file_name, "r") as f:
+    def _readCache(name):
+        with open(name, "r") as f:
             reader = csv.reader(f, delimiter=",")
         return reader
 
@@ -75,7 +74,7 @@ class StockData(object):
 
         if refresh == False:
             print("Using cache")
-            data = StockData._readCache(self.data_parent_path, self.ticker, self.freq)
+            data = StockData._readCache(self.name)
         else:
             print("Retrieving data")
             ticker = self.ticker.replace(".", "-")
