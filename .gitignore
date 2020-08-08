@@ -1,3 +1,4 @@
 secrets.yaml
 venv/
 .vscode/
+*.pyc
