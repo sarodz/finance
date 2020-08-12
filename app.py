@@ -5,7 +5,7 @@ import yaml
 from session import _get_state
 from data import StockData
 from datetime import datetime, timedelta
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 PATH = "D:\\Data\\Finance"
 
@@ -100,7 +100,7 @@ def run_app(company, year, target_yield, path):
 
         per = pd.DatetimeIndex(div_history.ts).to_period("Y")
         div_df = div_history.groupby(per).agg({"div_amount": ["sum", "count"]})
-        div_df = div_df.set_index(div_df.index.strftime("%Y-%m-%d"))
+        div_df = div_df.set_index(div_df.index.strftime("%Y"))
         div_df.columns = ["_".join(col).strip() for col in div_df.columns.values]
         div_df = div_df.reset_index()
         initial_year = div_df.head(1)
@@ -134,7 +134,7 @@ def run_app(company, year, target_yield, path):
         summary_df = summary_df.set_index([pd.Index([company])])
 
         return div_output, summary_df, yield_df, div_df
-
+    
     data = load_data(company, path)
     div_output, summary_df, yield_df, div_df = create_div_history(company, data, year, target_yield)
 
@@ -164,9 +164,9 @@ def run_app(company, year, target_yield, path):
     st.vega_lite_chart(div_df, {
         "width": 800,
         "height": 300,
-        "mark": "bar",
+        "mark": {"type": "bar", "xOffset": 0},
         "encoding": {
-            "x": {"field": "ts", "type": "temporal"},
+            "x": {"field": "ts", "type": "nominal", "band": 0.6},
             "y": {"field": "div_amount_sum", "type": "quantitative"}
         }
     })
