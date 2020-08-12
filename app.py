@@ -146,8 +146,8 @@ def run_app(company, year, target_yield, path):
         "height": 300,
         "mark": "line",
         "encoding": {
-            "x": {"field": "ts", "type": "temporal"},
-            "y": {"field": "yield", "type": "quantitative"}
+            "x": {"field": "ts", "type": "temporal", "title": "Date"},
+            "y": {"field": "yield", "type": "quantitative", "title": "Yield"}
         }
     })
 
@@ -156,8 +156,8 @@ def run_app(company, year, target_yield, path):
         "height": 300,
         "mark": "line",
         "encoding": {
-            "x": {"field": "ts", "type": "temporal"},
-            "y": {"field": "div_amount", "type": "quantitative"}
+            "x": {"field": "ts", "type": "temporal", "title": "Date"},
+            "y": {"field": "div_amount", "type": "quantitative", "title": "Dividend Amount"}
         }
     })
 
@@ -166,8 +166,8 @@ def run_app(company, year, target_yield, path):
         "height": 300,
         "mark": {"type": "bar", "xOffset": 0},
         "encoding": {
-            "x": {"field": "ts", "type": "nominal", "band": 0.6},
-            "y": {"field": "div_amount_sum", "type": "quantitative"}
+            "x": {"field": "ts", "type": "nominal", "band": 0.6, "title": "Year"},
+            "y": {"field": "div_amount_sum", "type": "quantitative", "title": "Total Dividend"}
         }
     })
     return None
@@ -187,4 +187,6 @@ def loadCache(path):
 
 if __name__ == "__main__":
     # if need be provide argument parser
+    import sys
+    sys.dont_write_bytecode = True
     main()
