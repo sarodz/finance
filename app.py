@@ -123,6 +123,7 @@ def run_app(company, year, target_yield, path):
         data = {
             f"Div in {init_date}": init_div,
             f"Div in {last_date}": last_div,
+            f"Div in {today.year}":cur_div_tot,
             "Dividend Growth %" : (last_div-init_div)/init_div*100,
             "Avg Yield": avg_yield,
             f"Price on {recent_date}": subset["price"].head(1).values[0],
