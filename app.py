@@ -36,8 +36,8 @@ def page_dividend(state):
     readme_text = st.markdown(readFile("instructions.md"))
 
     ticker = st.selectbox("Company List", ["", *state.companies])
-    year_range = st.number_input(label="How many years should the analysis include?", value=0,  min_value=0, max_value=20)
-    target_yield = st.slider(label="Target yield", value=0.0, step=0.1,  min_value=0.0, max_value=20.0)
+    year_range = st.number_input(label="How many years should the analysis include?", value=1,  min_value=1, max_value=20)
+    target_yield = st.slider(label="Target yield", value=0.1, step=0.1,  min_value=0.1, max_value=20.0)
     submit = st.button("Submit")
     if submit:
         readme_text.empty()
@@ -46,13 +46,21 @@ def page_dividend(state):
 
 def page_data(state):
     st.title("Data")
-    st.write("The following tickers can be accessed")
-    st.selectbox("Company List", ["", *state.companies])
-    ticker = st.text_input("Type the ticker with its market name to load a new ticker (Ex: TSX:TD)", "")
-    if ticker != "":
-        d = StockData(ticker=ticker, data_path=PATH)
-        d.get(refresh=False)
-        st.write(f"{ticker} is accesible now, navigate to Dashboard to access it")
+    st.write("The following tickers can be refreshed")
+    selection = st.selectbox("Company List", ["", *state.companies])
+    ticker = st.text_input("Or type the ticker with its market name to load a new ticker (Ex: TSX:TD)", "")
+    submit = st.button("Submit")
+    if submit:
+        if selection == "" and ticker == "":
+            st.write("Please make a selection")
+        if selection != "" and ticker != "":
+            st.write("Please leave one of the options blank")
+        else:
+            choice = selection if selection != "" else ticker
+            refresh = True if selection != "" else False
+            d = StockData(ticker=choice, data_path=PATH)
+            d.get(refresh=refresh)
+            st.write(f"{choice} is updated/accesible now, navigate to Dashboard to access it")
 
 
 def run_app(company, year, target_yield, path):
@@ -66,7 +74,6 @@ def run_app(company, year, target_yield, path):
 
     @st.cache
     def create_div_history(company, data, year, target_yield):
-        #TODO: Deal with the unfinished year by repeating the latest div
         subset = data[["timestamp", "close", "dividend_amount"]]
         subset = subset.rename(columns={
             "timestamp": "ts", 
@@ -81,7 +88,8 @@ def run_app(company, year, target_yield, path):
         history = subset[(subset["ts"] >= start_dt) & (subset["ts"] < cur_dt)]
         div_history = history[history["div_amount"] > 0]
         div_output = subset[(subset["ts"] >= start_dt) & (subset["div_amount"] > 0)]
-
+        cur_year_df = subset[(subset["ts"] >= cur_dt) & (subset["div_amount"] > 0)]
+ 
         per = pd.DatetimeIndex(history.ts).to_period("Y")
         yield_df = history.groupby(per).agg({"price": ["mean"], "div_amount": ["sum"]})
         yield_df = yield_df.set_index(yield_df.index.strftime("%Y-%m-%d"))
@@ -91,25 +99,35 @@ def run_app(company, year, target_yield, path):
         yield_df = yield_df.reset_index()
 
         per = pd.DatetimeIndex(div_history.ts).to_period("Y")
-        div_df = div_history.groupby(per).agg({"div_amount": ["sum"]})
+        div_df = div_history.groupby(per).agg({"div_amount": ["sum", "count"]})
         div_df = div_df.set_index(div_df.index.strftime("%Y-%m-%d"))
         div_df.columns = ["_".join(col).strip() for col in div_df.columns.values]
         div_df = div_df.reset_index()
         initial_year = div_df.head(1)
         last_year = div_df.tail(1)
+        div_freq = int(div_df["div_amount_count"].median())
+
+        if len(cur_year_df)  == div_freq:
+            cur_div_tot = cur_year_df["div_amount"].sum()
+        else:
+            cur_div_tot = cur_year_df["div_amount"].sum() + (div_freq - len(cur_year_df)) * cur_year_df["div_amount"].head(1).values
 
         init_div = initial_year["div_amount_sum"].values
+        init_date = initial_year["ts"].values[0][:4]
         last_div = last_year["div_amount_sum"].values
+        last_date = last_year["ts"].values[0][:4]
         avg_yield = yield_df["yield"].mean()
-        target_price = div_df["div_amount_sum"].mean() / (target_yield * 0.01)
+        hist_target_price = div_df["div_amount_sum"].mean() / (target_yield * 0.01)
+        cur_target_price = cur_div_tot / (target_yield * 0.01)
+        recent_date = str(subset["ts"].head(1).values[0])[:10]
         data = {
-            "Initial Year": initial_year["ts"].values[0][:4],
-            "Initial Year Div": init_div,
-            "Last Year": last_year["ts"].values[0][:4],
-            "Last Year Div": last_div,
+            f"Div in {init_date}": init_div,
+            f"Div in {last_date}": last_div,
             "Dividend Growth %" : (last_div-init_div)/init_div*100,
             "Avg Yield": avg_yield,
-            "Target Price*": target_price
+            f"Price on {recent_date}": subset["price"].head(1).values[0],
+            "Historical Target Price*": hist_target_price,
+            "Current Target Price*": cur_target_price
         }
         summary_df = pd.DataFrame.from_dict(data)
         summary_df = summary_df.set_index([pd.Index([company])])
@@ -121,7 +139,7 @@ def run_app(company, year, target_yield, path):
 
     st.write("## Dividend history")
     st.table(summary_df)
-    st.write(f"*Target Price is calculated based on the average dividend for the given period and shows the highest we should pay for {company}")
+    st.write(f"*Target Price is the maximum price we want to pay for a given stock. The difference between the two is, historical is based on average dividend amount and current is based on the current dividend amount for {company}")
     st.vega_lite_chart(yield_df, {
         "width": 800,
         "height": 300,
