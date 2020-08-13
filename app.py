@@ -36,7 +36,7 @@ def page_dividend(state):
     readme_text = st.markdown(readFile("instructions.md"))
 
     ticker = st.selectbox("Company List", ["", *state.companies])
-    year_range = st.number_input(label="How many years should the analysis include?", value=5,  min_value=1, max_value=20)
+    year_range = st.number_input(label="How many years should the analysis include?", value=10,  min_value=1, max_value=20)
     target_yield = st.slider(label="Target yield", value=5.0, step=0.1,  min_value=0.1, max_value=20.0)
     submit = st.button("Submit")
     if submit:
