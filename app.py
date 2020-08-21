@@ -187,6 +187,7 @@ def readFile(path):
 
 
 def loadCache(path):
+    StockData._checkCache(path, "")
     with open(f"{path}/cache.yaml", "r") as f:
         meta = yaml.safe_load(f)
         meta.pop("init", None)
