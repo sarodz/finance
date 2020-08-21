@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import time
 
 
-PATH = "D:\\Data\\Finance"
+PATH = "/root/data/"
 
 def main():
     state = _get_state()

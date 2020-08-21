@@ -22,7 +22,7 @@ class StockData(object):
 
     @staticmethod
     def _checkCache(parent, ticker):
-        file_name = f"{parent}\\cache.yaml"
+        file_name = f"{parent}/cache.yaml"
         if not os.path.isfile(file_name):
             with open(file_name, "w") as f:
                 yaml.dump({"init": None}, f)
@@ -38,7 +38,7 @@ class StockData(object):
 
     @staticmethod
     def _readMeta(parent):
-        with open(f"{parent}\\cache.yaml", "r") as f:
+        with open(f"{parent}/cache.yaml", "r") as f:
             meta = yaml.safe_load(f)
         return meta
 
@@ -55,7 +55,7 @@ class StockData(object):
                 writer.writerow(row)
 
         meta = StockData._readMeta(parent)
-        with open(f"{parent}\\cache.yaml", "w") as f:
+        with open(f"{parent}/cache.yaml", "w") as f:
             latest = (datetime.now() - timedelta(days=1)).strftime("%d-%m-%Y")
             meta = {**meta, **{ticker: latest}}
             yaml.dump(meta, f)
