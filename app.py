@@ -6,6 +6,8 @@ from session import _get_state
 from data import StockData
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
+import time
+
 
 PATH = "D:\\Data\\Finance"
 
@@ -47,14 +49,20 @@ def page_dividend(state):
 def page_data(state):
     st.title("Data")
     st.write("The following tickers can be refreshed")
-    selection = st.selectbox("Company List", ["", *state.companies])
+    selection = st.selectbox("Company List", ["", *state.companies, "All"])
     ticker = st.text_input("Or type the ticker with its market name to load a new ticker (Ex: TSX:TD)", "")
     submit = st.button("Submit")
     if submit:
         if selection == "" and ticker == "":
             st.write("Please make a selection")
-        if selection != "" and ticker != "":
+        elif selection != "" and ticker != "":
             st.write("Please leave one of the options blank")
+        elif selection == "All":
+            for company in state.companies:
+                d = StockData(ticker=company, data_path=PATH)
+                d.get(refresh=True)
+                st.write(f"{company} is updated/accesible now, navigate to Dashboard to access it")
+                time.sleep(8.5) # API limit is 5 per minute, 500 per day
         else:
             choice = selection if selection != "" else ticker
             refresh = True if selection != "" else False
