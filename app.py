@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import time
 
 
-PATH = "/root/data/"
+PATH = "/root/data"
 
 def main():
     state = _get_state()
@@ -187,7 +187,7 @@ def readFile(path):
 
 
 def loadCache(path):
-    with open(f"{path}\\cache.yaml", "r") as f:
+    with open(f"{path}/cache.yaml", "r") as f:
         meta = yaml.safe_load(f)
         meta.pop("init", None)
     return meta
