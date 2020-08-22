@@ -6,7 +6,7 @@ import csv
 
 
 class StockData(object):
-    def __init__(self, ticker, freq="daily", data_path="."):
+    def __init__(self, ticker, logger, freq="daily", data_path="."):
         with open("secrets.yaml", "r") as f:
             secrets = yaml.safe_load(f)
             API_key = secrets["alphavantage"]["API_key"]
@@ -17,8 +17,9 @@ class StockData(object):
         self.client = TimeSeries(key=API_key, output_format="csv")
         self.freq = freq
         ticker_temp = ticker.replace(":", "_") 
-        self.name = f"{data_path}\\{ticker_temp}_{freq}.csv"
+        self.name = f"{data_path}/{ticker_temp}_{freq}.csv"
         self.parent = data_path
+        self.logger = logger
 
     @staticmethod
     def _checkCache(parent, ticker):
@@ -71,11 +72,11 @@ class StockData(object):
             refresh = True
 
         if refresh == False:
-            print("Using cache")
+            self.logger.info("Using cache")
             data = StockData._readCache(self.name)
         else:
-            print("Retrieving data")
             ticker = self.ticker.replace(".", "-")
+            self.loggerx.info(f"Retrieving data for {ticker}")
             data = self.client.get_daily_adjusted(symbol=ticker, outputsize="full")
             StockData._writeCache(self.parent, data, self.ticker, self.name)
         return data

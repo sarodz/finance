@@ -7,14 +7,12 @@ from data import StockData
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import time
+import logging
 
-
-PATH = "/root/data"
-
-def main():
+def main(data_logger):
     state = _get_state()
     # Collect existing metadata
-    meta = loadCache(PATH)
+    meta = loadCache(os.environ["APP_PATH"])
     state.companies = [*meta]
 
     pages = {
@@ -43,7 +41,7 @@ def page_dividend(state):
     submit = st.button("Submit")
     if submit:
         readme_text.empty()
-        run_app(ticker, year_range, target_yield, PATH)
+        run_app(ticker, year_range, target_yield, os.environ["APP_PATH"])
 
 
 def page_data(state):
@@ -52,6 +50,8 @@ def page_data(state):
     selection = st.selectbox("Company List", ["", *state.companies, "All"])
     ticker = st.text_input("Or type the ticker with its market name to load a new ticker (Ex: TSX:TD)", "")
     submit = st.button("Submit")
+    # disable data request for now
+    submit = False
     if submit:
         if selection == "" and ticker == "":
             st.write("Please make a selection")
@@ -59,14 +59,14 @@ def page_data(state):
             st.write("Please leave one of the options blank")
         elif selection == "All":
             for company in state.companies:
-                d = StockData(ticker=company, data_path=PATH)
+                d = StockData(ticker=company, data_path=os.environ["APP_PATH"], logger=data_logger)
                 d.get(refresh=True)
                 st.write(f"{company} is updated/accesible now, navigate to Dashboard to access it")
                 time.sleep(8.5) # API limit is 5 per minute, 500 per day
         else:
             choice = selection if selection != "" else ticker
             refresh = True if selection != "" else False
-            d = StockData(ticker=choice, data_path=PATH)
+            d = StockData(ticker=choice, data_path=os.environ["APP_PATH"], logger=data_logger)
             d.get(refresh=refresh)
             st.write(f"{choice} is updated/accesible now, navigate to Dashboard to access it")
 
@@ -74,7 +74,7 @@ def page_data(state):
 def run_app(company, year, target_yield, path):
     @st.cache
     def load_data(company, path):
-        d = StockData(ticker=company, data_path=path)
+        d = StockData(ticker=company, data_path=path, logger=data_logger)
         d.get(refresh=False)
         with open(d.name, "r") as f:
             out = pd.read_csv(f)
@@ -198,4 +198,17 @@ if __name__ == "__main__":
     # if need be provide argument parser
     import sys
     sys.dont_write_bytecode = True
-    main()
+    import os 
+    os.environ["APP_PATH"] = "/root/data"
+    data_logger = logging.getLogger("data_logger")
+    data_logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler(os.environ["APP_PATH"] + "/log/app.log")
+    fh.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.ERROR)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    ch.setFormatter(formatter)
+    fh.setFormatter(formatter)
+    data_logger.addHandler(ch)
+    data_logger.addHandler(fh)
+    main(data_logger)
